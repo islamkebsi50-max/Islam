@@ -2,6 +2,7 @@ import { createContext, useContext, useState, useEffect } from 'react';
 import { User, onAuthStateChanged, signInWithPopup, signOut as firebaseSignOut } from 'firebase/auth';
 import { auth, googleProvider } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
+import { isAuthorizedAdmin } from '@/config/admins';
 
 interface AuthContextType {
   user: User | null;
@@ -19,7 +20,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setUser(user);
+      if (user && isAuthorizedAdmin(user.email)) {
+        setUser(user);
+      } else if (user) {
+        setUser(null);
+      } else {
+        setUser(null);
+      }
       setLoading(false);
     });
 
@@ -30,10 +37,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const result = await signInWithPopup(auth, googleProvider);
       if (result?.user) {
-        toast({
-          title: 'تم تسجيل الدخول بنجاح',
-          description: `مرحباً ${result.user.displayName}`,
-        });
+        if (isAuthorizedAdmin(result.user.email)) {
+          setUser(result.user);
+          toast({
+            title: 'تم تسجيل الدخول بنجاح',
+            description: `مرحباً ${result.user.displayName}`,
+          });
+        } else {
+          await firebaseSignOut(auth);
+          setUser(null);
+          toast({
+            title: 'وصول مرفوض',
+            description: 'عذراً، بريدك الإلكتروني غير مصرح له بالدخول',
+            variant: 'destructive',
+          });
+        }
       }
     } catch (error: any) {
       console.error('Error with sign in:', error);
@@ -48,6 +66,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signOut = async () => {
     try {
       await firebaseSignOut(auth);
+      setUser(null);
       toast({
         title: 'تم تسجيل الخروج',
       });
