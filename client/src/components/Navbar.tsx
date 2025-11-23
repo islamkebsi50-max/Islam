@@ -16,24 +16,24 @@ export function Navbar({ onSearch }: NavbarProps) {
   const { totalItems } = useCart();
   const [showAdminLogin, setShowAdminLogin] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const longPressTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const clickCountRef = useRef(0);
+  const clickTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  const handleLogoMouseDown = () => {
-    longPressTimeoutRef.current = setTimeout(() => {
+  const handleLogoClick = () => {
+    clickCountRef.current += 1;
+
+    if (clickCountRef.current === 3) {
       setShowAdminLogin(true);
-    }, 5000);
-  };
-
-  const handleLogoMouseUp = () => {
-    if (longPressTimeoutRef.current) {
-      clearTimeout(longPressTimeoutRef.current);
+      clickCountRef.current = 0;
     }
-  };
 
-  const handleLogoMouseLeave = () => {
-    if (longPressTimeoutRef.current) {
-      clearTimeout(longPressTimeoutRef.current);
+    if (clickTimeoutRef.current) {
+      clearTimeout(clickTimeoutRef.current);
     }
+
+    clickTimeoutRef.current = setTimeout(() => {
+      clickCountRef.current = 0;
+    }, 1000);
   };
 
   const handleSearch = (e: React.FormEvent) => {
@@ -48,9 +48,7 @@ export function Navbar({ onSearch }: NavbarProps) {
           <div className="flex items-center justify-between h-16 gap-4">
             {/* Logo */}
             <button
-              onMouseDown={handleLogoMouseDown}
-              onMouseUp={handleLogoMouseUp}
-              onMouseLeave={handleLogoMouseLeave}
+              onClick={handleLogoClick}
               className="text-2xl md:text-3xl font-bold text-foreground hover-elevate active-elevate-2 px-3 py-1 rounded-md transition-transform select-none"
               data-testid="button-logo"
             >
