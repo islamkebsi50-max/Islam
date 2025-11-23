@@ -124,6 +124,22 @@ export class FirestoreStorage implements IStorage {
       createdAt: updated.data()?.createdAt?.toDate() || new Date(),
     } as Order;
   }
+
+  async decreaseProductStock(productId: string, quantity: number): Promise<Product | undefined> {
+    const docRef = this.productsCollection.doc(productId);
+    const doc = await docRef.get();
+    if (!doc.exists) return undefined;
+
+    const current = doc.data() as Product;
+    const newStock = Math.max(0, current.stock - quantity);
+    
+    await docRef.update({ stock: newStock });
+    
+    return {
+      ...current,
+      stock: newStock,
+    };
+  }
 }
 
 export const firestoreStorage = new FirestoreStorage();

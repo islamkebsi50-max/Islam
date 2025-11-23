@@ -124,6 +124,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!order) {
         return res.status(404).json({ error: 'Order not found' });
       }
+
+      // عند قبول الطلب، قلل المخزون تلقائياً
+      if (status === 'accepted') {
+        for (const item of order.items) {
+          await storage.decreaseProductStock(item.productId, item.quantity);
+        }
+      }
+
       res.json(order);
     } catch (error: any) {
       res.status(500).json({ error: error.message });

@@ -8,6 +8,7 @@ export interface IStorage {
   createProduct(product: InsertProduct): Promise<Product>;
   updateProduct(id: string, product: InsertProduct): Promise<Product | undefined>;
   deleteProduct(id: string): Promise<boolean>;
+  decreaseProductStock(productId: string, quantity: number): Promise<Product | undefined>;
 
   // Orders
   getAllOrders(): Promise<Order[]>;
@@ -60,6 +61,18 @@ export class MemStorage implements IStorage {
 
   async deleteProduct(id: string): Promise<boolean> {
     return this.products.delete(id);
+  }
+
+  async decreaseProductStock(productId: string, quantity: number): Promise<Product | undefined> {
+    const existing = this.products.get(productId);
+    if (!existing) return undefined;
+
+    const updated: Product = {
+      ...existing,
+      stock: Math.max(0, existing.stock - quantity),
+    };
+    this.products.set(productId, updated);
+    return updated;
   }
 
   // Orders
