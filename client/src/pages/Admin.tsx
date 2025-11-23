@@ -8,6 +8,7 @@ import { AdminDashboard } from '@/components/admin/AdminDashboard';
 import { AdminProducts } from '@/components/admin/AdminProducts';
 import { AdminOrders } from '@/components/admin/AdminOrders';
 import { Skeleton } from '@/components/ui/skeleton';
+import { isAuthorizedAdmin } from '@/config/admins';
 
 export default function Admin() {
   const { user, loading, signOut } = useAuth();
@@ -15,7 +16,7 @@ export default function Admin() {
   const [location] = useLocation();
 
   useEffect(() => {
-    if (!loading && !user) {
+    if (!loading && (!user || !isAuthorizedAdmin(user.email))) {
       setLocation('/');
     }
   }, [user, loading, setLocation]);
