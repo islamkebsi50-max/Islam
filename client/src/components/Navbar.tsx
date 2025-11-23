@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { ShoppingCart, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,25 +14,26 @@ interface NavbarProps {
 
 export function Navbar({ onSearch }: NavbarProps) {
   const { totalItems } = useCart();
-  const [logoClickCount, setLogoClickCount] = useState(0);
   const [showAdminLogin, setShowAdminLogin] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const longPressTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  const handleLogoClick = () => {
-    const newCount = logoClickCount + 1;
-    setLogoClickCount(newCount);
-    
-    if (newCount === 5) {
+  const handleLogoMouseDown = () => {
+    longPressTimeoutRef.current = setTimeout(() => {
       setShowAdminLogin(true);
-      setLogoClickCount(0);
+    }, 5000);
+  };
+
+  const handleLogoMouseUp = () => {
+    if (longPressTimeoutRef.current) {
+      clearTimeout(longPressTimeoutRef.current);
     }
-    
-    // Reset count after 2 seconds
-    setTimeout(() => {
-      if (newCount < 5) {
-        setLogoClickCount(0);
-      }
-    }, 2000);
+  };
+
+  const handleLogoMouseLeave = () => {
+    if (longPressTimeoutRef.current) {
+      clearTimeout(longPressTimeoutRef.current);
+    }
   };
 
   const handleSearch = (e: React.FormEvent) => {
@@ -47,8 +48,10 @@ export function Navbar({ onSearch }: NavbarProps) {
           <div className="flex items-center justify-between h-16 gap-4">
             {/* Logo */}
             <button
-              onClick={handleLogoClick}
-              className="text-2xl md:text-3xl font-bold text-foreground hover-elevate active-elevate-2 px-3 py-1 rounded-md transition-transform"
+              onMouseDown={handleLogoMouseDown}
+              onMouseUp={handleLogoMouseUp}
+              onMouseLeave={handleLogoMouseLeave}
+              className="text-2xl md:text-3xl font-bold text-foreground hover-elevate active-elevate-2 px-3 py-1 rounded-md transition-transform select-none"
               data-testid="button-logo"
             >
               إسلام
