@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect } from 'react';
-import { User, onAuthStateChanged, signInWithRedirect, signOut as firebaseSignOut, getRedirectResult } from 'firebase/auth';
+import { User, onAuthStateChanged, signInWithPopup, signOut as firebaseSignOut } from 'firebase/auth';
 import { auth, googleProvider } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
 
@@ -23,30 +23,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setLoading(false);
     });
 
-    // Handle redirect result
-    getRedirectResult(auth)
-      .then((result) => {
-        if (result?.user) {
-          toast({
-            title: 'تم تسجيل الدخول بنجاح',
-            description: `مرحباً ${result.user.displayName}`,
-          });
-        }
-      })
-      .catch((error) => {
-        console.error('Error with redirect:', error);
-        toast({
-          title: 'خطأ في تسجيل الدخول',
-          description: error.message,
-          variant: 'destructive',
-        });
-      });
-
     return unsubscribe;
-  }, [toast]);
+  }, []);
 
-  const signIn = () => {
-    signInWithRedirect(auth, googleProvider);
+  const signIn = async () => {
+    try {
+      const result = await signInWithPopup(auth, googleProvider);
+      if (result?.user) {
+        toast({
+          title: 'تم تسجيل الدخول بنجاح',
+          description: `مرحباً ${result.user.displayName}`,
+        });
+      }
+    } catch (error: any) {
+      console.error('Error with sign in:', error);
+      toast({
+        title: 'خطأ في تسجيل الدخول',
+        description: error.message || 'حدث خطأ أثناء محاولة تسجيل الدخول',
+        variant: 'destructive',
+      });
+    }
   };
 
   const signOut = async () => {
